@@ -1,3 +1,4 @@
+require('dotenv').config();
 let https;
 try {
   https = require('node:https');
@@ -5,34 +6,28 @@ try {
   console.log('https support is disabled!');
 }
 
-/*
-https.get returns an enormous object that can include 
-some useful information. The example below returns a 
-status code.
+const url = 'https://api.digitalocean.com/';
 
-https.get('https://example.com', (res) => {
-	console.log(res.statusCode);
-});
-*/
+let options = {
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${process.env.DO_TOKEN}`,
+    "Method": "GET"
+  }
+};
 
-//set request options to hit url and parse response body
+const projectFetch = https.request(`${url}v2/projects`, options)
+.on('response', (res) => {
+  let msg = '';
 
-const url = 'https://example.com';
-
-const request = https.request(url, (response) => {
-    let data = '';
-    response.on('data', (chunk) => {
-        data = data + chunk.toString();
-    });
-  
-    response.on('end', () => {
-        //const body = JSON.stringify(data);
-        console.log(data);
-    });
+  res.on('data', chunk => {
+    msg += JSON.parse(chunk);
+  }).on('end', () => {
+    console.log(JSON.stringify(msg));
+  });
 })
-  
-request.on('error', (error) => {
-    console.log('An error', error);
+.on('error', err => {
+  console.log(`ERR: ${err.message}`)
 });
-  
-request.end() 
+
+projectFetch.end();
